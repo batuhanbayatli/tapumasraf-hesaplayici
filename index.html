@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TapuMasraf Pro // Türkiye Gayrimenkul Alım-Satım & Finansal Maliyet Analizörü</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @media print {
+            body { background: white !important; color: black !important; padding: 0 !important; font-size: 11px !important; }
+            header, footer, #action-controls, .no-print { display: none !important; }
+            #printable-report { box-shadow: none !important; border: 1px solid #94a3b8 !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; padding: 12px !important; }
+            .print-break-inside-avoid { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- HEADER -->
+    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md border-b border-slate-800">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="bg-emerald-600 p-2 rounded-xl text-white shadow">
+                    <i data-lucide="calculator" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base md:text-lg tracking-tight leading-tight flex items-center gap-1.5">
+                        TapuMasraf <span class="bg-emerald-500/20 text-emerald-400 font-bold text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/30">PRO</span>
+                    </h1>
+                    <p class="text-[10px] text-slate-400">bGroup // DATEX Tasarım • Gayrimenkul Finans Motoru</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="Calculator.resetDefaults()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-xs flex items-center gap-1">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Varsayılanlara Sıfırla</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ANA İÇERİK -->
+    <main class="max-w-5xl mx-auto px-4 py-5 flex-1 w-full space-y-5">
+
+        <!-- KONTROL & GİRİŞ PANELLERİ -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 no-print" id="action-controls">
+            
+            <!-- 1. SÜTUN: TAPU & SATIŞ BEDELİ -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+                <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <i data-lucide="home" class="w-4 h-4 text-emerald-600"></i>
+                    <h2 class="font-bold text-slate-900 text-xs md:text-sm">1. Satış & Tapu Değeri</h2>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Gerçek Satış Fiyatı (TL)</label>
+                    <input type="number" id="input-real-price" value="6500000" step="50000" oninput="Calculator.handlePriceChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-bold text-slate-900 outline-none focus:border-emerald-600">
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-[11px] font-bold text-slate-700">Tapuda Beyan Edilecek Bedel (TL)</label>
+                        <button type="button" onclick="Calculator.matchPrice()" class="text-[10px] text-emerald-600 hover:underline font-bold">Satışla Eşitle</button>
+                    </div>
+                    <input type="number" id="input-declared-price" value="6500000" step="50000" oninput="Calculator.calculate()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-bold text-emerald-700 outline-none focus:border-emerald-600">
+                    <p class="text-[10px] text-slate-400 mt-0.5">Tapu harcı bu tutar üzerinden (%2 + %2) hesaplanır.</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Döner Sermaye</label>
+                        <input type="number" id="input-doner" value="4850" oninput="Calculator.calculate()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs outline-none focus:border-emerald-600">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Döner Sermaye Ödeyen</label>
+                        <select id="select-doner-payer" onchange="Calculator.calculate()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs outline-none focus:border-emerald-600">
+                            <option value="buyer">Alıcı Öder</option>
+                            <option value="seller">Satıcı Öder</option>
+                            <option value="split">50% - 50% Paylaş</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. SÜTUN: KREDİ & İPOTEK PARAMETRELERİ -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+                <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <i data-lucide="landmark" class="w-4 h-4 text-blue-600"></i>
+                    <h2 class="font-bold text-slate-900 text-xs md:text-sm">2. Banka Kredisi & Ekspertiz</h2>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-700">Konut Kredisi Kullanılacak mı?</span>
+                    <input type="checkbox" id="check-loan" onchange="Calculator.toggleLoan(this.checked)" checked class="w-4 h-4 text-blue-600 rounded">
+                </div>
+
+                <div id="loan-fields" class="space-y-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Kullanılacak Kredi Tutarı (TL)</label>
+                        <input type="number" id="input-loan-amount" value="2500000" step="50000" oninput="Calculator.calculate()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-bold text-blue-700 outline-none focus:border-blue-600">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 mb-1">Kredi Tahsis (Binde 5)</label>
+                            <input type="number" id="input-loan-fee" readonly class="w-full bg-slate-100 border border-slate-200 rounded-lg p-2 text-xs text-slate-600">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 mb-1">İpotek Tesis Harcı</label>
+                            <input type="number" id="input-ipotek-fee" value="1650" oninput="Calculator.calculate()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs outline-none focus:border-blue-600">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 mb-1">SPK Ekspertiz Ücreti</label>
+                            <input type="number" id="input-ekspertiz" value="14500" oninput="Calculator.calculate()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs outline-none focus:border-blue-600">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 mb-1">DASK & Konut Sigortası</label>
+                            <input type="number" id="input-sigorta" value="4800" oninput="Calculator.calculate()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs outline-none focus:border-blue-600">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. SÜTUN: DANIŞMANLIK & YAN GİDERLER -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+                <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <i data-lucide="briefcase" class="w-4 h-4 text-amber-600"></i>
+                    <h2 class="font-bold text-slate-900 text-xs md:text-sm">3. Danışmanlık & Yan Masraflar</h2>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Alıcı Komisyonu</label>
+                        <select id="select-buyer-comm" onchange="Calculator.calculate()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs outline-none focus:border-amber-600">
+                            <option value="2.4">%2 + KDV (%2.4)</option>
+                            <option value="1.8">%1.5 + KDV (%1.8)</option>
+                            <option value="1.2">%1.0 + KDV (%1.2)</option>
+                            <option value="0">Komisyonsuz (0)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Satıcı Komisyonu</label>
+                        <select id="select-seller-comm" onchange="Calculator.calculate()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs outline-none focus:border-amber-600">
+                            <option value="2.4">%2 + KDV (%2.4)</option>
+                            <option value="1.8">%1.5 + KDV (%1.8)</option>
+                            <option value="1.2">%1.0 + KDV (%1.2)</option>
+                            <option value="0">Komisyonsuz (0)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Noter / Vekaletname / Tercüme</label>
+                    <input type="number" id="input-noter" value="1200" oninput="Calculator.calculate()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs outline-none focus:border-amber-600">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Belediye Rayiç / Emlak Vergisi Kapanışı</label>
+                    <input type="number" id="input-belediye" value="1500" oninput="Calculator.calculate()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs outline-none focus:border-amber-600">
+                </div>
+            </div>
+
+        </div>
+
+        <!-- YAZDIRILABİLİR KAPSAMLI FİNANSAL RAPOR (A4 UYUMLU) -->
+        <div id="printable-report" class="bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm space-y-5">
+            
+            <!-- ANTET & ÜST BİLGİ -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b border-slate-200 gap-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded bg-slate-900 text-white text-[10px] font-extrabold uppercase tracking-wider">Mali Analiz Belgesi</span>
+                        <h3 class="font-black text-slate-900 text-base md:text-xl">Gayrimenkul Alım-Satım & Resmi Masraf Dökümü</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">
+                        Hesaplama Tarihi: <span id="lbl-date" class="font-semibold text-slate-700"></span> • 
+                        Gerçek Satış: <strong id="lbl-real-price" class="text-slate-900">0 ₺</strong> • 
+                        Tapu Beyanı: <strong id="lbl-declared-price" class="text-emerald-700">0 ₺</strong>
+                    </p>
+                </div>
+                <div class="text-left sm:text-right bg-slate-50 sm:bg-transparent p-3 sm:p-0 rounded-xl w-full sm:w-auto">
+                    <span class="text-[11px] text-slate-400 block font-semibold">Toplam İşlem & Yan Masraf Hacmi</span>
+                    <span id="lbl-grand-total" class="text-xl md:text-2xl font-black text-emerald-600">0 ₺</span>
+                </div>
+            </div>
+
+            <!-- TABLOLAR VE KARTLAR -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- ALICI DETAY TABLOSU -->
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-between print-break-inside-avoid">
+                    <div>
+                        <div class="flex items-center justify-between pb-2 border-b border-slate-200 mb-3">
+                            <span class="font-extrabold text-slate-900 text-sm flex items-center gap-1.5">
+                                <i data-lucide="user" class="w-4 h-4 text-blue-600"></i> Alıcıya Düşen Toplam Maliyet
+                            </span>
+                            <span id="lbl-buyer-total" class="font-black text-blue-600 text-base">0 ₺</span>
+                        </div>
+                        <table class="w-full text-xs text-slate-700 space-y-1">
+                            <tbody>
+                                <tr class="border-b border-slate-200/60 py-1">
+                                    <td class="py-1">Tapu Harcı (%2):</td>
+                                    <td id="t-buyer-harc" class="text-right font-bold text-slate-900">0 ₺</td>
+                                </tr>
+                                <tr class="border-b border-slate-200/60 py-1">
+                                    <td class="py-1">Döner Sermaye Payı:</td>
+                                    <td id="t-buyer-doner" class="text-right font-semibold">0 ₺</td>
+                                </tr>
+                                <tr class="border-b border-slate-200/60 py-1">
+                                    <td class="py-1">Emlak Danışmanlığı (KDV Dahil):</td>
+                                    <td id="t-buyer-comm" class="text-right font-semibold">0 ₺</td>
+                                </tr>
+                                <tr class="border-b border-slate-200/60 py-1">
+                                    <td class="py-1">Banka Kredi Tahsis (Binde 5):</td>
+                                    <td id="t-buyer-loanfee" class="text-right font-semibold">0 ₺</td>
+                                </tr>
+                                <tr class="border-b border-slate-200/60 py-1">
+                                    <td class="py-1">İpotek Tesis Harcı:</td>
+                                    <td id="t-buyer-ipotek" class="text-right font-semibold">0 ₺</td>
+                                </tr>
+                                <tr class="border-b border-slate-200/60 py-1">
+                                    <td class="py-1">SPK Ekspertiz & Değerleme:</td>
+                                    <td id="t-buyer-ekspertiz" class="text-right font-semibold">0 ₺</td>
+                                </tr>
+                                <tr class="border-b border-slate-200/60 py-1">
+                                    <td class="py-1">Zorunlu Sigortalar (DASK / Konut):</td>
+                                    <td id="t-buyer-sigorta" class="text-right font-semibold">0 ₺</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">Noter & Vekalet Masrafı:</td>
+                                    <td id="t-buyer-noter" class="text-right font-semibold">0 ₺</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-200 bg-blue-50/60 p-2.5 rounded-lg text-xs">
+                        <div class="flex justify-between font-bold text-blue-900">
+                            <span>Alıcının Toplam Nakit İhtiyacı:</span>
+                            <span id="lbl-buyer-cash-needed">0 ₺</span>
+                        </div>
+                        <p class="text-[10px] text-blue-700 mt-0.5">(Özkaynak + Tüm Resmi Masraflar)</p>
+                    </div>
+                </div>
+
+                <!-- SATICI DETAY TABLOSU -->
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-between print-break-inside-avoid">
+                    <div>
+                        <div class="flex items-center justify-between pb-2 border-b border-slate-200 mb-3">
+                            <span class="font-extrabold text-slate-900 text-sm flex items-center gap-1.5">
+                                <i data-lucide="user-check" class="w-4 h-4 text-amber-600"></i> Satıcıya Düşen Masraf & Net Kazanç
+                            </span>
+                            <span id="lbl-seller-total" class="font-black text-amber-600 text-base">0 ₺</span>
+                        </div>
+                        <table class="w-full text-xs text-slate-700 space-y-1">
+                            <tbody>
+                                <tr class="border-b border-slate-200/60 py-1">
+                                    <td class="py-1">Tapu Harcı (%2):</td>
+                                    <td id="t-seller-harc" class="text-right font-bold text-slate-900">0 ₺</td>
+                                </tr>
+                                <tr class="border-b border-slate-200/60 py-1">
+                                    <td class="py-1">Döner Sermaye Payı:</td>
+                                    <td id="t-seller-doner" class="text-right font-semibold">0 ₺</td>
+                                </tr>
+                                <tr class="border-b border-slate-200/60 py-1">
+                                    <td class="py-1">Emlak Danışmanlığı (KDV Dahil):</td>
+                                    <td id="t-seller-comm" class="text-right font-semibold">0 ₺</td>
+                                </tr>
+                                <tr class="border-b border-slate-200/60 py-1">
+                                    <td class="py-1">Belediye Rayiç / Vergi Kapanışı:</td>
+                                    <td id="t-seller-belediye" class="text-right font-semibold">0 ₺</td>
+                                </tr>
+                                <tr class="border-b border-slate-200/60 py-1 text-slate-400 italic">
+                                    <td class="py-1">Kredi Tahsis / İpotek:</td>
+                                    <td class="text-right">Muaf</td>
+                                </tr>
+                                <tr class="border-b border-slate-200/60 py-1 text-slate-400 italic">
+                                    <td class="py-1">SPK Ekspertiz:</td>
+                                    <td class="text-right">Muaf</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1 text-slate-400 italic">DASK / Konut Sigortası:</td>
+                                    <td class="text-right text-slate-400 italic">Muaf</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-200 bg-amber-50/60 p-2.5 rounded-lg text-xs">
+                        <div class="flex justify-between font-bold text-amber-900">
+                            <span>Satıcının Eline Geçecek Net Tutar:</span>
+                            <span id="lbl-seller-net-income">0 ₺</span>
+                        </div>
+                        <p class="text-[10px] text-amber-700 mt-0.5">(Gerçek Satış Bedeli - Satıcı Masrafları)</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RESMİ MEVZUAT VE AÇIKLAMALAR -->
+            <div class="text-[10px] text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 print-break-inside-avoid">
+                <p>• <strong>Tapu Harcı Yasal Dayanağı:</strong> 492 Sayılı Harçlar Kanunu (4 Sayılı Tarife) uyarınca tapu harcı, gayrimenkulün beyan edilen devir bedeli üzerinden alıcı (%2) ve satıcıdan (%2) olmak üzere toplamda %4 olarak tahsil edilir.</p>
+                <p>• <strong>Hizmet Bedeli:</strong> Taşınmaz Ticareti Hakkında Yönetmelik madde 20 uyarınca danışmanlık hizmet bedeli aksi kararlaştırılmadıkça satış bedelinin azami %2 + %20 KDV'si olarak her iki taraftan ayrı ayrı alınır.</p>
+                <p>• <strong>Banka Masrafları:</strong> 6502 sayılı Kanun kapsamında tüketici konut kredilerinde tahsis ücreti kredi anaparasının binde 5'i (0.5%) ile sınırlandırılmıştır.</p>
+            </div>
+        </div>
+
+        <!-- AKSİYON BUTONLARI -->
+        <div class="flex flex-col sm:flex-row items-center gap-3 no-print">
+            <button onclick="window.print()" class="w-full sm:flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl text-xs md:text-sm flex items-center justify-center gap-2 shadow transition">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                <span>Resmi Masraf Raporunu Yazdır / A4 PDF Al</span>
+            </button>
+            <button onclick="Calculator.shareWhatsApp()" class="w-full sm:flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs md:text-sm flex items-center justify-center gap-2 shadow transition">
+                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                <span>Tüm Dökümü WhatsApp ile Müşteriye İlet</span>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-4 px-4 text-center mt-auto no-print">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-700">TapuMasraf PRO</span>
+                <span>•</span>
+                <span>bGroup // DATEX Tasarım</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span>Geliştirici: <strong class="text-slate-800">Batuhan Bayatlı</strong></span>
+                <a href="https://www.linkedin.com/in/batuhanbayatlı/" target="_blank" class="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 transition">
+                    <i data-lucide="linkedin" class="w-3.5 h-3.5"></i> LinkedIn
+                </a>
+                <a href="https://github.com/batuhanbayatli" target="_blank" class="text-slate-700 hover:text-slate-900 font-bold flex items-center gap-1 transition">
+                    <i data-lucide="github" class="w-3.5 h-3.5"></i> GitHub
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT HESAPLAMA MOTORU -->
+    <script>
+        class Calculator {
+            static handlePriceChange() {
+                const realPrice = Number(document.getElementById('input-real-price').value) || 0;
+                document.getElementById('input-declared-price').value = realPrice;
+                Calculator.calculate();
+            }
+
+            static matchPrice() {
+                const realPrice = Number(document.getElementById('input-real-price').value) || 0;
+                document.getElementById('input-declared-price').value = realPrice;
+                Calculator.calculate();
+            }
+
+            static toggleLoan(isLoan) {
+                const fields = document.getElementById('loan-fields');
+                if (isLoan) {
+                    fields.classList.remove('opacity-40', 'pointer-events-none');
+                } else {
+                    fields.classList.add('opacity-40', 'pointer-events-none');
+                }
+                Calculator.calculate();
+            }
+
+            static calculate() {
+                const realPrice = Number(document.getElementById('input-real-price').value) || 0;
+                const declaredPrice = Number(document.getElementById('input-declared-price').value) || 0;
+                const doner = Number(document.getElementById('input-doner').value) || 0;
+                const donerPayer = document.getElementById('select-doner-payer').value;
+
+                const isLoan = document.getElementById('check-loan').checked;
+                const loanAmount = isLoan ? (Number(document.getElementById('input-loan-amount').value) || 0) : 0;
+                const loanFee = isLoan ? (loanAmount * 0.005) : 0; // Binde 5
+                document.getElementById('input-loan-fee').value = Math.round(loanFee);
+
+                const ipotekFee = isLoan ? (Number(document.getElementById('input-ipotek-fee').value) || 0) : 0;
+                const ekspertiz = isLoan ? (Number(document.getElementById('input-ekspertiz').value) || 0) : 0;
+                const sigorta = isLoan ? (Number(document.getElementById('input-sigorta').value) || 0) : 0;
+
+                const buyerCommRate = Number(document.getElementById('select-buyer-comm').value) / 100;
+                const sellerCommRate = Number(document.getElementById('select-seller-comm').value) / 100;
+
+                const noter = Number(document.getElementById('input-noter').value) || 0;
+                const belediye = Number(document.getElementById('input-belediye').value) || 0;
+
+                // 1. TAPU HARCI (Beyan edilen tutar üzerinden)
+                const buyerHarc = declaredPrice * 0.02;
+                const sellerHarc = declaredPrice * 0.02;
+
+                // 2. DÖNER SERMAYE
+                let buyerDoner = 0;
+                let sellerDoner = 0;
+                if (donerPayer === 'buyer') buyerDoner = doner;
+                else if (donerPayer === 'seller') sellerDoner = doner;
+                else { buyerDoner = doner / 2; sellerDoner = doner / 2; }
+
+                // 3. KOMİSYONLAR (Gerçek satış bedeli üzerinden)
+                const buyerComm = realPrice * buyerCommRate;
+                const sellerComm = realPrice * sellerCommRate;
+
+                // 4. TOPLAM ALICI & SATICI MASRAFI
+                const buyerTotal = buyerHarc + buyerDoner + buyerComm + loanFee + ipotekFee + ekspertiz + sigorta + noter;
+                const sellerTotal = sellerHarc + sellerDoner + sellerComm + belediye;
+                const grandTotal = buyerTotal + sellerTotal;
+
+                // 5. NAKİT VE NET KAZANÇ DENGESİ
+                const buyerDownPayment = Math.max(0, realPrice - loanAmount); // Peşinat
+                const buyerCashNeeded = buyerDownPayment + buyerTotal;
+                const sellerNetIncome = realPrice - sellerTotal;
+
+                // ARAYÜZ GÜNCELLEMELERİ
+                const fmt = (n) => Number(n).toLocaleString('tr-TR') + ' ₺';
+
+                document.getElementById('lbl-date').innerText = new Date().toLocaleDateString('tr-TR');
+                document.getElementById('lbl-real-price').innerText = fmt(realPrice);
+                document.getElementById('lbl-declared-price').innerText = fmt(declaredPrice);
+                document.getElementById('lbl-grand-total').innerText = fmt(grandTotal);
+
+                // Alıcı Tablosu
+                document.getElementById('lbl-buyer-total').innerText = fmt(buyerTotal);
+                document.getElementById('t-buyer-harc').innerText = fmt(buyerHarc);
+                document.getElementById('t-buyer-doner').innerText = fmt(buyerDoner);
+                document.getElementById('t-buyer-comm').innerText = fmt(buyerComm);
+                document.getElementById('t-buyer-loanfee').innerText = fmt(loanFee);
+                document.getElementById('t-buyer-ipotek').innerText = fmt(ipotekFee);
+                document.getElementById('t-buyer-ekspertiz').innerText = fmt(ekspertiz);
+                document.getElementById('t-buyer-sigorta').innerText = fmt(sigorta);
+                document.getElementById('t-buyer-noter').innerText = fmt(noter);
+                document.getElementById('lbl-buyer-cash-needed').innerText = fmt(buyerCashNeeded);
+
+                // Satıcı Tablosu
+                document.getElementById('lbl-seller-total').innerText = fmt(sellerTotal);
+                document.getElementById('t-seller-harc').innerText = fmt(sellerHarc);
+                document.getElementById('t-seller-doner').innerText = fmt(sellerDoner);
+                document.getElementById('t-seller-comm').innerText = fmt(sellerComm);
+                document.getElementById('t-seller-belediye').innerText = fmt(belediye);
+                document.getElementById('lbl-seller-net-income').innerText = fmt(sellerNetIncome);
+            }
+
+            static resetDefaults() {
+                document.getElementById('input-real-price').value = 6500000;
+                document.getElementById('input-declared-price').value = 6500000;
+                document.getElementById('input-doner').value = 4850;
+                document.getElementById('select-doner-payer').value = 'buyer';
+                document.getElementById('check-loan').checked = true;
+                document.getElementById('input-loan-amount').value = 2500000;
+                document.getElementById('input-ipotek-fee').value = 1650;
+                document.getElementById('input-ekspertiz').value = 14500;
+                document.getElementById('input-sigorta').value = 4800;
+                document.getElementById('select-buyer-comm').value = '2.4';
+                document.getElementById('select-seller-comm').value = '2.4';
+                document.getElementById('input-noter').value = 1200;
+                document.getElementById('input-belediye').value = 1500;
+                Calculator.toggleLoan(true);
+                Calculator.calculate();
+            }
+
+            static shareWhatsApp() {
+                const fmt = (n) => Number(n).toLocaleString('tr-TR') + ' TL';
+                const realPrice = document.getElementById('lbl-real-price').innerText;
+                const declaredPrice = document.getElementById('lbl-declared-price').innerText;
+                const buyerTotal = document.getElementById('lbl-buyer-total').innerText;
+                const buyerCash = document.getElementById('lbl-buyer-cash-needed').innerText;
+                const sellerTotal = document.getElementById('lbl-seller-total').innerText;
+                const sellerNet = document.getElementById('lbl-seller-net-income').innerText;
+                const grandTotal = document.getElementById('lbl-grand-total').innerText;
+
+                const text = encodeURIComponent(`📑 *GAYRİMENKUL ALIM-SATIM & RESMİ MASRAF DÖKÜMÜ*\n\n💰 *Gerçek Satış Bedeli:* ${realPrice}\n📜 *Tapu Beyan Bedeli:* ${declaredPrice}\n\n👤 *ALICI MASRAF VE NAKİT PLANI:*\n• Toplam Resmi Masraf: *${buyerTotal}*\n(Tapu Harcı, Döner Sermaye, Kredi Tahsis, SPK Ekspertiz, DASK/Sigorta, Noter, Komisyon)\n👉 *Alıcının Toplam Nakit İhtiyacı:* *${buyerCash}*\n\n👥 *SATICI MASRAF VE NET KAZANÇ:*\n• Toplam Masraf: *${sellerTotal}*\n(Tapu Harcı, Döner Sermaye, Belediye Kapanış, Komisyon)\n👉 *Satıcının Eline Geçecek Net Tutar:* *${sellerNet}*\n\n📊 *Toplam İşlem Hacmi & Harçlar:* ${grandTotal}\n\n_TapuMasraf PRO // bGroup - DATEX Tasarım_`);
+                window.open(`https://wa.me/?text=${text}`, '_blank');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Calculator.calculate();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
